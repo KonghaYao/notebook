@@ -41,3 +41,48 @@ const App = () => {
     return <div onclick={() => count((lastVal) => lastVal - 1)}>减一</div>
 }
 ```
+
+## Atom——衍生（Reflect）
+
+在 Vue 中，通过 `computed` 可以衍生出一个新的响应式变量，这个响应式变量可以自动计算内部函数，并在每一次依赖的响应式变量发生变化时进行重新计算。
+
+而在原子的世界中，原子即是一切响应式变量的起点，你可以通过衍生（Reflect）来构建一个原子。这个衍生出来的原子能够像 `computed` 一样自动根据依赖计算自身的值，同时其也是原子，也可以进行上一小结所演示的变更操作。
+
+```tsx
+const App = () => {
+    const count = atom(100)
+    const isEnough = reflect(() => count() > 98)
+    // isEnough(true) // 临时变更数值
+    return (
+        <>
+            <div onclick={() => count((lastVal) => lastVal - 1)}>减一</div>
+            <button>{isEnough() ? '小于98' : '太大了'}</button>
+        </>
+    )
+}
+```
+
+衍生这一功能对于构建响应式数据流是非常有效的。衍生让数据流在 JS 作用域中生成一个节点，这个节点代表了这个地方的数据需要被展示，需要产生更新视图的副作用，而后在 JSX 中将会用它来进行视图的变更。或者，这个节点可以被其他的数据所依赖，从而实现一个便利的、自动计算的、像静脉血管那样精细的响应式代码逻辑。
+
+### 突变（mutation）
+
+突变（mutation）是当 Atom 具有自动依赖时，由外部主动触发该节点的数据更新，从而直接影响该节点以后数据的计算结果的编程现象。
+
+突变的好处是，你可以直接影响这条响应式数据流的中间及后续部分，而不用担心污染上游数据，下游的数据也可以方便地遵从你的逻辑去进行自动计算。而且，下一次上游发生变化时，自动会将突变取消，而不用担心产生额外的错误信息。
+
+```tsx
+const App = () => {
+    const count = atom(Math.random() * 100)
+    const isCountAbove50 = reflect(() => form().count > 50)
+    const message = reflact(() => (isCountAbove50() ? 'large' : 'small'))
+    return (
+        <>
+            <div>
+                {message()} - {count()}
+            </div>
+            <button onclick={() => count(Math.random() * 100)}>重置</button>
+            <button onclick={() => isCountAbove50((i) => !i)}>突变操作</button>
+        </>
+    )
+}
+```
